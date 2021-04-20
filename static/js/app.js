@@ -66,19 +66,25 @@ function featureAxis(newScaleX, axisX, newScaleY, axisY) {
 };
    
 // update texts and circles
-function featureCirclesAndText(circlesGroup, textGroup, newScaleX, newScaleY, chosenAxisX, chosenAxisY) {
+function featureCircles(circlesGroup, newScaleX, newScaleY, chosenAxisX, chosenAxisY) {
 
   circlesGroup.transition()
     .duration(1000)
     .attr('circlex', data => newScaleX(data[chosenAxisX]))
     .attr('circley', data => newScaleY(data[chosenAxisY]))
 
+  return circlesGroup;
+
+};
+
+function featureText(textGroup, newScaleX, newScaleY, chosenAxisX, chosenAxisY) {
+
   textGroup.transition()
     .duration(1000)
     .attr('x', d => newScaleX(data[chosenAxisX]))
     .attr('y', d => newScaleY(data[chosenAxisY]));
  
-  return {"circleGroup": circlesGroup, "testGroup": textGroup};
+  return textGroup;
 
 };
 
@@ -175,8 +181,7 @@ function createFeatures(chartData) {
       .attr('font-size', '10px')
       .text(function(d){return d.abbr});
    
-  // initial labels
-
+  // initial labels 
   var labelsXGroup = chartGroup.append('g')
                                .attr('transform', `translate(${width / 2}, ${height + 10 + margin.top})`);
 
@@ -238,10 +243,9 @@ function createFeatures(chartData) {
       .text('Lacks Healthcare (%)');
        
   var circlesGroup = updateToolTip(chosenAxisX, chosenAxisY, circlesGroup);
-
-
-  //x axis event listener
-  xLabelsGroup.selectAll('text')
+ 
+  //x axis labels event listener
+  labelsXGroup.selectAll('text')
     .on('click', function() {
       
       var value = d3.select(this).attr('value'); //find scale value
@@ -252,8 +256,8 @@ function createFeatures(chartData) {
         scaleLinearX = scaleX(chartData, chosenAxisX);
         axisX = featureAxisX(scaleLinearX, axisX);
  
-        circlesGroup = featureCirclesAndText(circlesGroup, textsGroup, scaleLinearX, chosenAxisX, scaleLinearY, chosenAxisY)[0];
-        textsGroup = featureCirclesAndText(circlesGroup, textsGroup, scaleLinearX, chosenAxisX, scaleLinearY, chosenAxisY)[1];
+        circlesGroup = featureCircles(circlesGroup, scaleLinearX, chosenAxisX, scaleLinearY, chosenAxisY);
+        textsGroup = featureText(textsGroup, scaleLinearX, chosenAxisX, scaleLinearY, chosenAxisY);
 
         //update tooltip
         circlesGroup = updateToolTip(chosenAxisX, chosenAxisY, circlesGroup);
@@ -275,9 +279,46 @@ function createFeatures(chartData) {
             incomeLabel.classed('active', true).classed('inactive', false);
         }
       }
-    }); 
+    });  
+ 
+  labelsYGroup.selectAll('text')
+              .on('click', function() {
 
-}
+    var value = d3.select(this).attr('value');
+
+    if(value != chosenAxisY) {
+
+      chosenAxisY = value;
+      linearScaleY = scaleY(chartData, chosenAxisY);
+      
+      axisY = renderaxisY(linearScaleY, axisY);
+
+      circlesGroup = featureCircles(circlesGroup, scaleLinearX, chosenAxisX, scaleLinearY, chosenAxisY);
+      textsGroup = featureText(textsGroup, scaleLinearX, chosenAxisX, scaleLinearY, chosenAxisY);
+
+      //update tooltips
+      circlesGroup = updateToolTip(chosenAxisX, chosenAxisY, circlesGroup);
+ 
+      if (chosenAxisY === 'obesity') {
+        labelObesity.classed('active', true).classed('inactive', false);
+        labelSmokes.classed('active', false).classed('inactive', true);
+        labelHealthCare.classed('active', false).classed('inactive', true);
+      }
+      else if (chosenAxisY === 'smokes') {
+        labelObesity.classed('active', false).classed('inactive', true);
+        labelSmokes.classed('active', true).classed('inactive', false);
+        labelHealthCare.classed('active', false).classed('inactive', true);
+      }
+      else {
+        labelObesity.classed('active', false).classed('inactive', true);
+        labelSmokes.classed('active', false).classed('inactive', true);
+        labelHealthCare.classed('active', true).classed('inactive', false);
+      }
+    }
+
+  }); 
+
+} 
 
 
 
