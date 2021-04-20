@@ -37,7 +37,7 @@ function scaleX(data, axisX) {
     return scaleLinearX;
 }
 
-//function for x axis selection 
+//function for y axis selection 
 function scaleY(data, axisY) {
     
     var scaleLinearY = d3.scaleLinear()
@@ -48,42 +48,75 @@ function scaleY(data, axisY) {
     return scaleLinearY;
 }
 
-// update x axis
-function featureAxisX(newScaleX, axisX) {
+// update axis
+function featureAxis(newScaleX, axisX, newScaleY, axisY) {
 
     var axisBottom = d3.axisBottom(newScaleX);
+    var axisLeft = d3.axisLeft(newScaleY);
   
     axisX.transition()
          .duration(1000)
          .call(axisBottom);
-  
-    return axisX;
+
+    axisY.transition()
+         .duration(1000)
+         .call(axisLeft); 
+
+    return {"axisX": axisX, "axisY": axisY}; 
+} 
+   
+// update texts and circles
+function featureCirclesAndText(circlesGroup, newScaleX, newScaleY, chosenAxisX, chosenAxisY) {
+
+  circlesGroup.transition()
+    .duration(1000)
+    .attr('circlex', data => newScaleX(data[chosenAxisX]))
+    .attr('circley', data => newScaleY(data[chosenAxisY]))
+
+  textGroup.transition()
+    .duration(1000)
+    .attr('x', d => newScaleX(data[chosenAxisX]))
+    .attr('y', d => newScaleY(data[chosenAxisY]));
+ 
+  return {"circleGroup": circlesGroup, "testGroup": textGroup};
 }
+
+//update circle groups for tooltip
+function updateToolTip(chosenAxisX, chosenAxisY, circlesGroup) {
   
-// update y axis
-function featureAxisY(newScaleY, axisY) {
+  if (chosenAxisX === 'poverty') { var labelX = 'In Poverty (%):'; }
+  else if (chosenAxisX === 'age') { var labelX = 'Age (Median)'; } 
+  else { var labelX = 'Household Income (Median)'; }  
+    
+  if (chosenAxisY ==='obesity') { var labelY = "Obese (%)"; }
+  else if(chosenAxisY === 'smokes') { var labelY = "Smokes (%)"; } 
+  else { var labelY = "Lakes HealthCare (%)"; }
+ 
+  //create tooltip
+  var toolTip = d3.tip()
+                  .attr('class', 'd3-tip')
+                  .offset([-8, 0])
+                  .html(function(d) { 
+                    return (`${d.state} <br> ${labelX} ${value}<br>${labelY} ${d[chosenAxisY]}%`);
+                    });
 
-  var axisLeft = d3.axisLeft(newScaleY);
+  circlesGroup.call(toolTip);
 
-  axisY.transition()
-       .duration(1000)
-       .call(axisLeft);
+  //add on event
+  circlesGroup.on('mouseover', toolTip.show)
+              .on('mouseout', toolTip.hide);
 
-  return axisY;
-}
+    return circlesGroup;
 
+} 
 
+//main function
+d3.csv('../static/data/data.csv').then(function(chartData) { 
+  createFeatures(chartData);
+});
 
-
-
-
-
-
-
-
-
-//retrieve data
-d3.csv('../data/data.csv').then(function(chartData) {
+//retrieve data & draw chart
+function createFeatures(chartData) { 
 
   console.log(chartData);
 
@@ -98,6 +131,33 @@ d3.csv('../data/data.csv').then(function(chartData) {
 
   });
 
+  //create linear scales
+  var scaleLinearX = scaleX(chartData, chosenAxisX);
+  var scaleLinearY = scaleY(chartData, chosenAxisY);
+  
+  //create x axis
+  var axisBottom = d3.axisBottom(scaleLinearX);
+  var axisLeft = d3.axisLeft(scaleLinearY);
+  
+  //append x
+  var xAxis = chartGroup.append('g')
+                        .classed('x-axis', true)
+                        .attr('transform', `translate(0, ${height})`)
+                        .call(axisBottom);
+  
+  //append y
+  var yAxis = chartGroup.append('g')
+                        .classed('y-axis', true)
+                        //.attr
+                        .call(axisLeft);
+  
 
   
 }
+
+
+
+// function test() {
+//   return 1, 2;
+// } 
+// console.log(test);
