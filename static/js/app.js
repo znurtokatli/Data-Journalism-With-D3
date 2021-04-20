@@ -40,7 +40,8 @@ function scaleX(data, axisX) {
 //function for y axis selection 
 function scaleY(data, axisY) {
     
-    var scaleLinearY = d3.scaleLinear()
+    var scaleLinearY = d3.scaleLinear() 
+
       .domain([d3.min(data, d => d[axisY]) * 0.5,
                d3.max(data, d => d[axisY]) * 1.5])
       .range([height, 0]);
@@ -49,30 +50,36 @@ function scaleY(data, axisY) {
 };
 
 // update axis
-function featureAxis(newScaleX, axisX, newScaleY, axisY) {
+function featureAxisX(newScaleX, axisX) {
 
-    var axisBottom = d3.axisBottom(newScaleX);
-    var axisLeft = d3.axisLeft(newScaleY);
+    var axisBottom = d3.axisBottom(newScaleX); 
   
     axisX.transition()
-         .duration(1000)
-         .call(axisBottom);
+         .duration(3000)
+         .call(axisBottom); 
 
-    axisY.transition()
-         .duration(1000)
-         .call(axisLeft); 
+    return axisX; 
+};
 
-    return {"axisX": axisX, "axisY": axisY}; 
+function featureAxisY(newScaleY, axisY) {
+ 
+  var axisLeft = d3.axisLeft(newScaleY);
+ 
+  axisY.transition()
+       .duration(3000)
+       .call(axisLeft); 
+
+  return axisY; 
 };
    
 // update texts and circles
 function featureCircles(circlesGroup, newScaleX, newScaleY, chosenAxisX, chosenAxisY) {
 
   circlesGroup.transition()
-    .duration(1000)
-    .attr('circlex', data => newScaleX(data[chosenAxisX]))
-    .attr('circley', data => newScaleY(data[chosenAxisY]))
-
+    .duration(3000)
+    .attr('cx', data => newScaleX(data[chosenAxisX]))
+    .attr('cy', data => newScaleY(data[chosenAxisY]))
+ 
   return circlesGroup;
 
 };
@@ -80,9 +87,9 @@ function featureCircles(circlesGroup, newScaleX, newScaleY, chosenAxisX, chosenA
 function featureText(textGroup, newScaleX, newScaleY, chosenAxisX, chosenAxisY) {
 
   textGroup.transition()
-    .duration(1000)
-    .attr('x', d => newScaleX(data[chosenAxisX]))
-    .attr('y', d => newScaleY(data[chosenAxisY]));
+    .duration(3000)
+    .attr('x', data => newScaleX(data[chosenAxisX]))
+    .attr('y', data => newScaleY(data[chosenAxisY]));
  
   return textGroup;
 
@@ -102,9 +109,9 @@ function updateToolTip(chosenAxisX, chosenAxisY, circlesGroup) {
   //create tooltip
   var toolTip = d3.tip()
                   .attr('class', 'd3-tip')
-                  .offset([-8, 0])
+                   .offset([-8, 0]) 
                   .html(function(d) { 
-                    return (`${d.state} <br> ${labelX} ${value}<br>${labelY} ${d[chosenAxisY]}%`);
+                    return (`${d.state} <br> ${labelX} <br>${labelY} ${d[chosenAxisY]}%`);
                     });
 
   circlesGroup.call(toolTip);
@@ -147,13 +154,13 @@ function createFeatures(chartData) {
   var axisLeft = d3.axisLeft(scaleLinearY);
   
   //append x
-  var xAxis = chartGroup.append('g')
+  var axisX = chartGroup.append('g')
                         .classed('x-axis', true)
                         .attr('transform', `translate(0, ${height})`)
                         .call(axisBottom);
   
   //append y
-  var yAxis = chartGroup.append('g')
+  var axisY = chartGroup.append('g')
                         .classed('y-axis', true)
                         //.attr
                         .call(axisLeft);
@@ -167,6 +174,7 @@ function createFeatures(chartData) {
       .attr('cx', d => scaleLinearX(d[chosenAxisX]))
       .attr('cy', d => scaleLinearY(d[chosenAxisY]))
       .attr('r', 10)
+      .attr("fill", "pink")
       .attr('opacity', '.5');
 
   //append text
@@ -291,7 +299,7 @@ function createFeatures(chartData) {
       chosenAxisY = value;
       linearScaleY = scaleY(chartData, chosenAxisY);
       
-      axisY = renderaxisY(linearScaleY, axisY);
+      axisY = featureAxisY(scaleLinearY, axisY);
 
       circlesGroup = featureCircles(circlesGroup, scaleLinearX, chosenAxisX, scaleLinearY, chosenAxisY);
       textsGroup = featureText(textsGroup, scaleLinearX, chosenAxisX, scaleLinearY, chosenAxisY);
